@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 36 100% 97%;
+  --foreground: 20 20% 12%;
+  --card: 0 0% 100%;
+  --card-foreground: 20 20% 12%;
+  --primary: 17 94% 53%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 147 56% 40%;
+  --secondary-foreground: 0 0% 100%;
+  --accent: 46 93% 63%;
+  --accent-foreground: 20 20% 12%;
+  --muted: 40 40% 92%;
+  --muted-foreground: 20 12% 35%;
+  --border: 30 25% 84%;
+  --ring: 17 94% 53%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at 10% 10%, rgba(255, 199, 113, 0.4) 0, transparent 45%),
+    radial-gradient(circle at 90% 20%, rgba(76, 201, 150, 0.25) 0, transparent 45%),
+    linear-gradient(160deg, #fff7ea 0%, #fef9f2 45%, #eefcf5 100%);
+  color: hsl(var(--foreground));
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+}

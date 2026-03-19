@@ -5,7 +5,10 @@ Full-stack AI-powered parametric insurance platform for food delivery partners.
 ## What this project delivers
 
 - Protects weekly income loss for Swiggy/Zomato partners
-- Detects disruption events automatically (rain, AQI, heat, traffic gridlock, curfew, app outage)
+- Detects disruption events automatically:
+  - Environmental: rain, heat, severe AQI, traffic gridlock
+  - Social: curfew, local strike, zone closure
+  - Platform: app outage
 - Triggers instant, no-claim payouts
 - Uses AI for risk pricing and fraud detection
 - Runs on weekly subscription plans
@@ -30,7 +33,8 @@ docs/
 ## Core insurance logic
 
 ```text
-IF rainfall > 50mm OR AQI > 300 OR temperature > 42C OR trafficIndex > 8 OR curfew = TRUE OR platformOutage = TRUE
+IF rainfall > 50mm OR AQI > 300 OR temperature > 42C OR trafficIndex > 8
+OR curfew = TRUE OR localStrike = TRUE OR zoneClosure = TRUE OR platformOutage = TRUE
 THEN disruption event is created and payout workflow is triggered
 ```
 
@@ -127,6 +131,8 @@ npm run dev
 
 - Loss-of-income only coverage
 - No health, life, accident, or vehicle-repair coverage
+- Persona focus fixed to food delivery partners (Swiggy/Zomato)
+- Financial model is weekly-only (`WEEKLY` cycle)
 
 ## Test case (Heavy rain)
 
