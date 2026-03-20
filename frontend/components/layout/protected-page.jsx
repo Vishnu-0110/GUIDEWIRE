@@ -6,14 +6,15 @@ import useAuthStore from "@/store/useAuthStore";
 
 export default function ProtectedPage({ children }) {
   const router = useRouter();
-  const { token } = useAuthStore();
+  const { token, hydrated } = useAuthStore();
 
   useEffect(() => {
-    if (!token) {
-      router.push("/auth");
+    if (hydrated && !token) {
+      router.replace("/auth");
     }
-  }, [token, router]);
+  }, [hydrated, token, router]);
 
+  if (!hydrated) return null;
   if (!token) return null;
   return children;
 }

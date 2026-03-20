@@ -1,13 +1,15 @@
 "use client";
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 const useAuthStore = create(
   persist(
     (set) => ({
       token: null,
       user: null,
+      hydrated: false,
+      setHydrated: (hydrated) => set({ hydrated }),
       setSession: ({ token, user }) => {
         if (typeof window !== "undefined") {
           localStorage.setItem("gigshield_token", token);
@@ -23,7 +25,11 @@ const useAuthStore = create(
       setUser: (user) => set({ user })
     }),
     {
-      name: "gigshield-auth"
+      name: "gigshield-auth",
+      storage: createJSONStorage(() => localStorage),
+      onRehydrateStorage: () => (state) => {
+        state?.setHydrated(true);
+      }
     }
   )
 );
