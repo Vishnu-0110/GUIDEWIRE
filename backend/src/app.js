@@ -8,7 +8,10 @@ const { notFound, errorHandler } = require("./middleware/errorHandler");
 const env = require("./config/env");
 
 const app = express();
-const allowedOrigins = [...new Set([env.frontendUrl, ...env.frontendUrls].filter(Boolean))];
+const normalizeOrigin = (origin) => origin.replace(/\/+$/, "");
+const allowedOrigins = [
+  ...new Set([env.frontendUrl, ...env.frontendUrls].filter(Boolean).map(normalizeOrigin))
+];
 
 if (env.trustProxy) {
   app.set("trust proxy", 1);
@@ -20,7 +23,7 @@ app.use(
     origin(origin, callback) {
       if (!origin) return callback(null, true);
       if (!allowedOrigins.length) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
+      if (allowedOrigins.includes(normalizeOrigin(origin))) return callback(null, true);
       return callback(new Error("CORS blocked for this origin"));
     },
     credentials: true

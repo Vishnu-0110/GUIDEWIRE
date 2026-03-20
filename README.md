@@ -118,6 +118,14 @@ npm run dev
 - Backend: `http://localhost:4000/api/health`
 - AI service: `http://localhost:8000/health`
 
+## Deployment
+
+- Frontend: Vercel (`frontend/` root directory)
+- Backend + AI service: Render (`backend/` and `ai-service/`)
+- Render Blueprint file is included at repo root: `render.yaml`
+- Detailed guide: `docs/deployment-vercel-render.md`
+- ChatGPT-ready project summary: `docs/project-overview-for-chatgpt.md`
+
 ## Data flow
 
 - Forecast API -> AI pricing (`risk_score`, `risk_level`)
