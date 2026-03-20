@@ -55,6 +55,52 @@ function mockSocialStatus() {
   };
 }
 
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function isFiniteNumber(value) {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+async function resolveCoordinates(city, location = {}) {
+  if (isFiniteNumber(location.lat) && isFiniteNumber(location.lng)) {
+    return { lat: location.lat, lng: location.lng, source: "user_gps" };
+  }
+
+  if (env.mapsApiKey) {
+    try {
+      const response = await axios.get("https://maps.googleapis.com/maps/api/geocode/json", {
+        params: { address: city, key: env.mapsApiKey },
+        timeout: 7000
+      });
+      const geocode = response.data?.results?.[0]?.geometry?.location;
+      if (isFiniteNumber(geocode?.lat) && isFiniteNumber(geocode?.lng)) {
+        return { lat: geocode.lat, lng: geocode.lng, source: "google_geocode" };
+      }
+    } catch (error) {
+      // Continue to secondary geocoder.
+    }
+  }
+
+  if (env.weatherApiKey) {
+    try {
+      const response = await axios.get("https://api.openweathermap.org/geo/1.0/direct", {
+        params: { q: city, limit: 1, appid: env.weatherApiKey },
+        timeout: 7000
+      });
+      const geocode = response.data?.[0];
+      if (isFiniteNumber(geocode?.lat) && isFiniteNumber(geocode?.lon)) {
+        return { lat: geocode.lat, lng: geocode.lon, source: "openweather_geocode" };
+      }
+    } catch (error) {
+      // Let the caller decide fallback behavior.
+    }
+  }
+
+  return null;
+}
+
 async function withFallback({ city, zone, sourceType, fetcher }) {
   try {
     const payload = await fetcher();
@@ -169,15 +215,69 @@ async function fetchCurfewStatus(city, zone = "central") {
   });
 }
 
-async function fetchTrafficRealtime(city, zone = "central") {
+async function fetchTrafficRealtime(city, zone = "central", location = {}) {
   return withFallback({
     city,
     zone,
     sourceType: "traffic_realtime",
     fetcher: async () => {
-      // Mocks are acceptable for hackathon mode.
-      // This hook is API-ready and can be replaced with TomTom/Mapbox/Google traffic feeds.
-      return mockTraffic();
+      if (env.trafficProvider === "mock") {
+        return mockTraffic();
+      }
+
+      if (!env.trafficApiKey) {
+        if (env.trafficMockFallback === "true") return mockTraffic();
+        throw new Error("Traffic provider not configured: TRAFFIC_API_KEY missing.");
+      }
+
+      if (env.trafficProvider !== "tomtom") {
+        throw new Error(`Unsupported TRAFFIC_PROVIDER: ${env.trafficProvider}`);
+      }
+
+      const coordinates = await resolveCoordinates(city, location);
+      if (!coordinates) {
+        if (env.trafficMockFallback === "true") return mockTraffic();
+        throw new Error(`Unable to resolve coordinates for city ${city}`);
+      }
+
+      const response = await axios.get(
+        `${env.trafficApiBaseUrl}/flowSegmentData/absolute/10/json`,
+        {
+          params: {
+            key: env.trafficApiKey,
+            point: `${coordinates.lat},${coordinates.lng}`,
+            unit: "KMPH"
+          },
+          timeout: 7000
+        }
+      );
+
+      const flow = response.data?.flowSegmentData;
+      if (!flow) throw new Error("Traffic API response missing flowSegmentData.");
+
+      const currentSpeed = Number(flow.currentSpeed || 0);
+      const freeFlowSpeed = Number(flow.freeFlowSpeed || 0);
+      const currentTravelTime = Number(flow.currentTravelTime || 0);
+      const freeFlowTravelTime = Number(flow.freeFlowTravelTime || 0);
+
+      const speedCongestion =
+        freeFlowSpeed > 0 ? clamp(1 - currentSpeed / freeFlowSpeed, 0, 1) : 0;
+      const travelTimeRatio =
+        freeFlowTravelTime > 0 ? currentTravelTime / freeFlowTravelTime : 1;
+      const travelCongestion = clamp((travelTimeRatio - 1) / 2, 0, 1);
+
+      let trafficIndex = clamp(Math.max(speedCongestion, travelCongestion) * 10, 0, 10);
+      if (flow.roadClosure) trafficIndex = clamp(trafficIndex + 2, 0, 10);
+
+      return {
+        trafficIndex: Number(trafficIndex.toFixed(2)),
+        source: "tomtom_flow",
+        currentSpeed,
+        freeFlowSpeed,
+        currentTravelTime,
+        freeFlowTravelTime,
+        coordinateSource: coordinates.source
+      };
     }
   });
 }
@@ -206,11 +306,11 @@ async function fetchSocialStatus(city, zone = "central") {
   });
 }
 
-async function fetchLiveConditions(city, zone = "central") {
+async function fetchLiveConditions(city, zone = "central", location = {}) {
   const [weather, aqi, traffic, curfew, platform, social] = await Promise.all([
     fetchWeatherRealtime(city, zone),
     fetchAqiRealtime(city, zone),
-    fetchTrafficRealtime(city, zone),
+    fetchTrafficRealtime(city, zone, location),
     fetchCurfewStatus(city, zone),
     fetchPlatformStatus(city, zone),
     fetchSocialStatus(city, zone)

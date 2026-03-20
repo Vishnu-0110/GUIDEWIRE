@@ -101,6 +101,12 @@ pip install -r ai-service/requirements.txt
 
 - Copy `backend/.env.example` -> `backend/.env`
 - Copy `frontend/.env.example` -> `frontend/.env.local`
+- For mostly live external signals, set:
+  - `OPENWEATHER_API_KEY`, `AQI_API_KEY`, `TRAFFIC_API_KEY`
+  - `TRAFFIC_PROVIDER=tomtom`
+- For live payment hooks, choose one:
+  - `PAYMENT_PROVIDER=custom_api` + `PAYMENT_API_BASE_URL`
+  - `PAYMENT_PROVIDER=razorpay` + Razorpay credentials
 
 ### 4. Run all services
 
@@ -123,9 +129,9 @@ npm run dev
 
 - Weather API (OpenWeather or mock)
 - AQI API (WAQI or mock)
-- Traffic data (mock/API-ready endpoint)
+- Traffic data (TomTom live flow + geocoded coordinates, with cache/mock fallback)
 - Platform API simulation for app crash/outage events
-- Payment system (mock UPI now, live provider pluggable)
+- Payment system (custom live provider hooks or Razorpay, with mock fallback)
 
 ## Coverage guardrails
 

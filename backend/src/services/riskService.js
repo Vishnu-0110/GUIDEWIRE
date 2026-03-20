@@ -25,7 +25,7 @@ async function calculateRiskForUser(user) {
     await Promise.all([
       fetchWeatherForecast(user.city, user.zone),
       fetchAqiRealtime(user.city, user.zone),
-      fetchTrafficRealtime(user.city, user.zone),
+      fetchTrafficRealtime(user.city, user.zone, user.lastKnownLocation || {}),
       fetchSocialStatus(user.city, user.zone),
       getHistoricalDisruptionCount(user.city, user.zone)
     ]);

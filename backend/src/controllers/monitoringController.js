@@ -9,7 +9,7 @@ const getLiveMonitoring = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.userId);
   if (!user) throw new ApiError(404, "User not found");
 
-  const live = await fetchLiveConditions(user.city, user.zone);
+  const live = await fetchLiveConditions(user.city, user.zone, user.lastKnownLocation || {});
   const alerts = evaluateConditions(live);
   const recentEvents = await Event.find({ city: user.city, zone: user.zone })
     .sort({ timestamp: -1 })
