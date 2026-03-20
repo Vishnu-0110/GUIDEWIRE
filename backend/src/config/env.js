@@ -12,7 +12,24 @@ function toInt(value, fallback) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function toBool(value, fallback = false) {
+  if (typeof value !== "string") return fallback;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "true") return true;
+  if (normalized === "false") return false;
+  return fallback;
+}
+
+function csv(value) {
+  if (typeof value !== "string") return [];
+  return value
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
 const env = {
+  nodeEnv: clean(process.env.NODE_ENV || "development"),
   port: toInt(clean(process.env.PORT || "4000"), 4000),
   mongoUri: clean(process.env.MONGO_URI || ""),
   jwtSecret: clean(process.env.JWT_SECRET || "dev_jwt_secret_change_me"),
@@ -24,6 +41,8 @@ const env = {
   mapsApiKey: clean(process.env.GOOGLE_MAPS_API_KEY || ""),
   aiServiceUrl: clean(process.env.AI_SERVICE_URL || "http://localhost:8000"),
   frontendUrl: clean(process.env.FRONTEND_URL || "http://localhost:3000"),
+  frontendUrls: csv(process.env.FRONTEND_URLS || ""),
+  trustProxy: toBool(process.env.TRUST_PROXY || "false", false),
   redisUrl: clean(process.env.REDIS_URL || ""),
   paymentProvider: clean(process.env.PAYMENT_PROVIDER || "mock"),
   paymentCurrency: clean(process.env.PAYMENT_CURRENCY || "INR"),
